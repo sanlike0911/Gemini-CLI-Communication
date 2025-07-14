@@ -64,12 +64,12 @@ send_message() {
     
     echo "📤 送信中: $target ← '$message'"
     
-    # Claude Codeのプロンプトを一度クリア
+    # Gemini CLIのプロンプトを一度クリア
     tmux send-keys -t "$target" C-c
     sleep 0.3
     
-    # メッセージ送信
-    tmux send-keys -t "$target" "$message"
+    # メッセージ送信 (リテラルモード)
+    tmux send-keys -l -t "$target" "$message"
     sleep 0.1
     
     # エンター押下

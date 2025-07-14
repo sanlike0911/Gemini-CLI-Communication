@@ -49,8 +49,8 @@ launch_agent() {
     local target=$1
     local name=$2
     
-    log_info "$name を起動中..."
-    tmux send-keys -t "$target" 'claude --dangerously-skip-permissions' C-m
+    log_info "$name を起動中（自動承認モード）..."
+    tmux send-keys -t "$target" 'gemini -y' C-m
     sleep 0.5
 }
 
@@ -91,9 +91,11 @@ main() {
     log_success "✅ 全エージェントの起動コマンドを送信しました"
     echo ""
     echo "📋 次のステップ:"
-    echo "  1. 各画面でブラウザ認証を完了してください"
+    echo "  1. 各画面でGemini CLIの認証を完了してください"
     echo "  2. PRESIDENTに指示を送信:"
     echo "     「あなたはpresidentです。[プロジェクト内容]」"
+    echo ""
+    echo "✨ 自動承認モード（-y）で起動済み - 確認プロンプトは自動でYESになります"
     echo ""
     echo "💡 画面を確認:"
     echo "  tmux attach-session -t president    # 社長画面"

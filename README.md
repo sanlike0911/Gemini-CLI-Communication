@@ -1,6 +1,6 @@
-# 🤖 Claude Code エージェント通信システム
+# 🤖 Gemini CLI エージェント通信システム
 
-複数のAIが協力して働く、まるで会社のような開発システムです
+複数のAIが協力して働く、まるで会社のような開発システムです（Gemini CLI版）
 
 ## 📌 これは何？
 
@@ -19,7 +19,7 @@
 ### 必要なもの
 - Mac または Linux
 - tmux（ターミナル分割ツール）
-- Claude Code CLI
+- Gemini CLI
 
 ### 手順
 
@@ -42,10 +42,10 @@ cd Claude-Code-Communication
 tmux attach-session -t president
 ```
 
-**社長画面でClaudeを起動：**
+**社長画面でGemini CLIを起動：**
 ```bash
-# ブラウザで認証が必要
-claude --dangerously-skip-permissions
+# 認証が必要
+gemini
 ```
 
 #### 4️⃣ 部下たちを一括起動（1分）
@@ -54,12 +54,12 @@ claude --dangerously-skip-permissions
 ```bash
 # 4人の部下を一括起動
 for i in {0..3}; do 
-  tmux send-keys -t multiagent.$i 'claude --dangerously-skip-permissions' C-m
+  tmux send-keys -t multiagent.$i 'gemini' C-m
 done
 ```
 
 #### 5️⃣ 部下たちの画面を確認
-・各画面でブラウザでのClaude認証が必要な場合あり
+・各画面でGemini CLIの認証が必要な場合あり
 ```bash
 tmux attach-session -t multiagent
 ```
@@ -377,13 +377,13 @@ sleep 300
 
 ## 参考リンク
     
-・Claude Code公式   
-　　URL: https://docs.anthropic.com/ja/docs/claude-code/overview   
+・Gemini CLI公式   
+　　URL: https://github.com/google/gemini-cli   
     
 ・Tmux Cheat Sheet & Quick Reference | Session, window, pane and more     
 　　URL: https://tmuxcheatsheet.com/   
      
-・Akira-Papa/Claude-Code-Communication   
+・Akira-Papa/Claude-Code-Communication（元のClaude Code版）   
 　　URL: https://github.com/Akira-Papa/Claude-Code-Communication   
      
 ・【tmuxでClaude CodeのMaxプランでAI組織を動かし放題のローカル環境ができた〜〜〜！ので、やり方をシェア！！🔥🔥🔥🙌☺️】 #AIエージェント - Qiita   
@@ -393,7 +393,7 @@ sleep 300
 　　URL: https://qiita.com/akira_papa_AI/items/d68782fbf03ffd9b2f43   
     
     
-※以下の情報を参考に、今回のtmuxのClaude Code組織環境を構築することができました。本当にありがとうございました！☺️🙌   
+※以下の情報を参考に、今回のtmuxのGemini CLI組織環境を構築することができました。本当にありがとうございました！☺️🙌   
     
 ◇Claude Code双方向通信をシェルで一撃構築できるようにした発案者の元木さん   
 参考GitHub ：   
