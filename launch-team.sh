@@ -46,48 +46,33 @@ check_gemini() {
 
 # multiagentセッション確認・作成
 setup_multiagent_session() {
-    if tmux has-session -t multiagent 2>/dev/null; then
-        log_warning "multiagentセッションが既に存在します"
-        
-        read -p "既存セッションを削除して再作成しますか？ (y/N): " confirm
-        if [[ "$confirm" =~ ^[Yy]$ ]]; then
-            log_info "既存セッションを削除中..."
-            tmux kill-session -t multiagent
-        else
-            log_info "既存セッションを使用します"
-            return 0
-        fi
+    if ! tmux has-session -t multiagent 2>/dev/null; then
+        log_error "multiagentセッションが存在しません"
+        echo ""
+        echo "🔧 環境セットアップが必要です:"
+        echo "   ./setup.sh"
+        echo ""
+        echo "セットアップ後、再度このスクリプトを実行してください。"
+        exit 1
     fi
     
-    log_info "multiagentセッションを作成中..."
-    
-    # メインウィンドウ作成（boss1用）
-    tmux new-session -d -s multiagent -n boss1
-    
-    # worker用ペインを分割作成
-    tmux split-window -h -t multiagent:boss1  # worker1（右半分）
-    tmux split-window -v -t multiagent:boss1.1  # worker2（右下）
-    tmux split-window -v -t multiagent:boss1.0  # worker3（左下）
-    
-    # ペインのサイズ調整（均等分割）
-    tmux select-layout -t multiagent:boss1 tiled
-    
-    log_success "multiagentセッション作成完了（4ペイン分割）"
+    log_info "既存のmultiagentセッションを使用します"
 }
 
 # チームメンバー起動
 launch_team_member() {
     local pane_id=$1
     local member_name=$2
-    local target="multiagent:boss1.$pane_id"
+    local target="multiagent:0.$pane_id"
     
     log_info "$member_name を起動中（自動承認モード）..."
     
     # ペインにフォーカス
     tmux select-pane -t "$target"
     
-    # Gemini CLI起動
-    tmux send-keys -t "$target" 'gemini -y' C-m
+    # コンフィグベースでGemini CLI起動
+    local model=$(jq -r ".model" "./gemini-config.json" 2>/dev/null || echo "gemini-2.5-flash")
+    tmux send-keys -t "$target" "gemini -m '$model' -y" C-m
     sleep 0.5
     
     log_success "$member_name 起動コマンド送信完了"
@@ -217,6 +202,12 @@ main() {
     
     # 使用方法表示
     show_usage
+    
+    echo ""
+    log_info "チーム画面に接続しています..."
+    
+    # tmuxセッションに接続（4画面表示）
+    tmux attach-session -t multiagent
 }
 
 # ヘルプ表示

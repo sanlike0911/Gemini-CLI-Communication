@@ -2,6 +2,9 @@
 
 複数のAIが協力して働く、まるで会社のような開発システムです（Gemini CLI版）
 
+## 移植バージョン
+フォーク元のプロジェクトのClaude Code CLI を使用していたAI組織システムを Gemini CLI に移植しました。
+
 ## 📌 これは何？
 
 **3行で説明すると：**
@@ -33,48 +36,31 @@ cd Claude-Code-Communication
 ```bash
 ./setup.sh
 ```
-これでバックグラウンドに5つのターミナル画面が準備されます！
+これでバックグラウンドに必要なターミナル画面が準備されます！
 
-#### 3️⃣ 社長画面を開いてAI起動（2分）
-
-**社長画面を開く：**
+#### 3️⃣ 社長起動（1分）
 ```bash
-tmux attach-session -t president
+./launch-president.sh
 ```
+このコマンドで社長（PRESIDENT）が自動起動し、画面が表示されます。
 
-**社長画面でGemini CLIを起動：**
+#### 4️⃣ チーム起動（1分）
+新しいターミナルウィンドウを開いて：
 ```bash
-# 認証が必要
-gemini
+./launch-team.sh
 ```
-
-#### 4️⃣ 部下たちを一括起動（1分）
-
-**新しいターミナルを開いて：**
-```bash
-# 4人の部下を一括起動
-for i in {0..3}; do 
-  tmux send-keys -t multiagent.$i 'gemini' C-m
-done
-```
-
-#### 5️⃣ 部下たちの画面を確認
-・各画面でGemini CLIの認証が必要な場合あり
-```bash
-tmux attach-session -t multiagent
-```
-これで4分割された画面が表示されます：
+このコマンドでチーム（boss1 + worker1-3）が自動起動し、4分割画面が表示されます：
 ```
 ┌────────┬────────┐
 │ boss1  │worker1 │
 ├────────┼────────┤
-│worker2 │worker3 │
+│worker3 │worker2 │
 └────────┴────────┘
 ```
 
-#### 6️⃣ 魔法の言葉を入力（30秒）
+#### 5️⃣ 魔法の言葉を入力（30秒）
 
-そして入力：
+社長画面で入力：
 ```
 あなたはpresidentです。おしゃれな充実したIT企業のホームページを作成して。
 ```
@@ -233,8 +219,14 @@ emotiflow-mvp/
 # 状態を確認
 tmux ls
 
+# 各画面の状態確認
+tmux attach-session -t president   # 社長画面
+tmux attach-session -t multiagent  # チーム画面
+
 # 再起動
 ./setup.sh
+./launch-president.sh
+./launch-team.sh
 ```
 
 ### Q: メッセージが届かない

@@ -46,30 +46,26 @@ check_gemini() {
 
 # presidentセッション確認・作成
 setup_president_session() {
-    if tmux has-session -t president 2>/dev/null; then
-        log_warning "presidentセッションが既に存在します"
-        
-        read -p "既存セッションを削除して再作成しますか？ (y/N): " confirm
-        if [[ "$confirm" =~ ^[Yy]$ ]]; then
-            log_info "既存セッションを削除中..."
-            tmux kill-session -t president
-        else
-            log_info "既存セッションを使用します"
-            return 0
-        fi
+    if ! tmux has-session -t president 2>/dev/null; then
+        log_error "presidentセッションが存在しません"
+        echo ""
+        echo "🔧 環境セットアップが必要です:"
+        echo "   ./setup.sh"
+        echo ""
+        echo "セットアップ後、再度このスクリプトを実行してください。"
+        exit 1
     fi
     
-    log_info "presidentセッションを作成中..."
-    tmux new-session -d -s president
-    log_success "presidentセッション作成完了"
+    log_info "既存のpresidentセッションを使用します"
 }
 
 # PRESIDENT起動
 launch_president() {
     log_info "PRESIDENT（統括責任者）を起動中（自動承認モード）..."
     
-    # Gemini CLI起動
-    tmux send-keys -t president 'gemini -y' C-m
+    # コンフィグベースでGemini CLI起動
+    local model=$(jq -r ".model" "./gemini-config.json" 2>/dev/null || echo "gemini-2.5-flash")
+    tmux send-keys -t president "gemini -m '$model' -y" C-m
     sleep 1
     
     log_success "PRESIDENT起動コマンド送信完了"
@@ -135,6 +131,12 @@ main() {
     
     # 使用方法表示
     show_usage
+    
+    echo ""
+    log_info "PRESIDENT画面に接続しています..."
+    
+    # tmuxセッションに接続（PRESIDENT画面表示）
+    tmux attach-session -t president
 }
 
 # ヘルプ表示

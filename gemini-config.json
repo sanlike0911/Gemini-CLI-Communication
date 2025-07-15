@@ -1,0 +1,9 @@
+{
+  "model": "gemini-2.5-flash",
+  "yolo_mode": true,
+  "debug": false,
+  "sandbox": false,
+  "all_files": false,
+  "show_memory_usage": false,
+  "telemetry": false
+}
