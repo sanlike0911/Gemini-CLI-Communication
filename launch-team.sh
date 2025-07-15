@@ -70,6 +70,21 @@ setup_multiagent_session() {
     log_info "既存のmultiagentセッションを使用します"
 }
 
+# gemini-config.jsonから設定を読み込む関数
+get_model_from_config() {
+    if [ -f "./gemini-config.json" ]; then
+        # jqが利用可能な場合
+        if command -v jq &> /dev/null; then
+            jq -r ".model" "./gemini-config.json" 2>/dev/null || echo "gemini-2.5-flash"
+        else
+            # jqが利用できない場合はgrep/sedで解析
+            grep '"model"' "./gemini-config.json" | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | head -1
+        fi
+    else
+        echo "gemini-2.5-flash"
+    fi
+}
+
 # チームメンバー起動
 launch_team_member() {
     local pane_id=$1
@@ -82,7 +97,8 @@ launch_team_member() {
     tmux select-pane -t "$target"
     
     # コンフィグベースでGemini CLI起動
-    local model=$(jq -r ".model" "./gemini-config.json" 2>/dev/null || echo "gemini-2.5-flash")
+    local model=$(get_model_from_config)
+    log_info "使用モデル: $model"
     tmux send-keys -t "$target" "gemini -m '$model' -y" C-m
     sleep 0.5
     
@@ -163,12 +179,12 @@ show_pane_layout() {
 ┌─────────────┬─────────────┐
 │             │             │
 │    boss1    │   worker1   │
-│ (ペイン 0)   │ (ペイン 1)   │
+│ (ペイン 0)  │ (ペイン 1)   │
 │             │             │
 ├─────────────┼─────────────┤
 │             │             │
 │   worker3   │   worker2   │
-│ (ペイン 3)   │ (ペイン 2)   │
+│ (ペイン 3)  │ (ペイン 2)   │
 │             │             │
 └─────────────┴─────────────┘
 
