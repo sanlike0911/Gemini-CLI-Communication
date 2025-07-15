@@ -24,6 +24,17 @@ log_error() {
 
 echo "🎯 チーム起動スクリプト"
 echo "======================="
+
+# プロジェクト確認
+if [ -L "./instructions" ]; then
+    instructions_link=$(readlink "./instructions")
+    project_dir=$(dirname "$instructions_link")
+    current_project=$(basename "$project_dir")
+    echo "📂 プロジェクト: $current_project"
+else
+    echo "⚠️  プロジェクトが選択されていません"
+    echo "   先に ./setup.sh を実行してプロジェクトを選択してください"
+fi
 echo ""
 
 # tmux環境確認

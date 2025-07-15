@@ -17,14 +17,27 @@
 - 12個の革新的アイデアを生成
 - 100%のテストカバレッジ
 
-## 🎬 5分で動かしてみよう！
+## 🚀 クイックスタート
 
 ### 必要なもの
 - Mac または Linux
 - tmux（ターミナル分割ツール）
 - Gemini CLI
 
-### 手順
+### エージェント構成
+- **PRESIDENT** (別セッション): 統括責任者 - Gemini CLIで動作
+- **boss1** (multiagent:0.0): チームリーダー - Gemini CLIで動作
+- **worker1,2,3** (multiagent:0.1-3): 実行担当 - Gemini CLIで動作
+
+### 基本フロー
+PRESIDENT → boss1 → workers → boss1 → PRESIDENT
+
+### Gemini CLI 特有の注意事項
+- 認証は各セッションで個別に必要
+- レスポンス形式はClaude Codeとは異なる場合がある
+- ツール利用可能性を確認して使用
+
+### 基本的な起動手順
 
 #### 1️⃣ ダウンロード（30秒）
 ```bash
@@ -32,34 +45,30 @@ git clone https://github.com/nishimoto265/Claude-Code-Communication.git
 cd Claude-Code-Communication
 ```
 
-#### 2️⃣ 環境構築（1分）
+#### 2️⃣ システム起動
+
 ```bash
+# 統合セットアップ（プロジェクト選択→環境構築）
 ./setup.sh
 ```
-これでバックグラウンドに必要なターミナル画面が準備されます！
 
-#### 3️⃣ 社長起動（1分）
-```bash
-./launch-president.sh
-```
-このコマンドで社長（PRESIDENT）が自動起動し、画面が表示されます。
+#### 3️⃣ 個別起動
 
-#### 4️⃣ チーム起動（1分）
-新しいターミナルウィンドウを開いて：
-```bash
-./launch-team.sh
-```
-このコマンドでチーム（boss1 + worker1-3）が自動起動し、4分割画面が表示されます：
-```
-┌────────┬────────┐
-│ boss1  │worker1 │
-├────────┼────────┤
-│worker3 │worker2 │
-└────────┴────────┘
-```
+1. 社長用ウインドウを立ち上げ、以下を実行
 
-#### 5️⃣ 魔法の言葉を入力（30秒）
+   ```bash
+   # 個別エージェント起動
+   ./launch-president.sh  # 社長起動
+   ```
 
+2. 「2️⃣システム起動」を行ったウインドウで以下を実行
+
+   ```bash
+   # 個別エージェント起動
+   ./launch-team.sh       # チーム起動
+   ```
+
+#### 4️⃣ 魔法の言葉を入力
 社長画面で入力：
 ```
 あなたはpresidentです。おしゃれな充実したIT企業のホームページを作成して。
@@ -70,6 +79,54 @@ cd Claude-Code-Communication
 2. マネージャーが3人の作業者に仕事を割り振り
 3. みんなで協力して開発
 4. 完成したら社長に報告
+
+## 🗂️ プロジェクト管理システム
+
+### 概要
+プロジェクトごとに異なる指示書と設定を管理できるシステムです。複数のプロジェクトを切り替えながら、それぞれに最適化されたAIエージェントチームで開発を進められます。
+
+### プロジェクト構造
+```
+./projects/
+├── programming-organization/
+│   ├── instructions/          # プロジェクト固有の指示書
+│   │   ├── president.md       # PRESIDENT専用指示書
+│   │   ├── boss.md            # boss1専用指示書
+│   │   └── worker.md          # worker1-3共通指示書
+│   └── workspace/             # 作業ディレクトリ
+└── (他のプロジェクト...)
+
+# 現在のディレクトリ（シンボリックリンク）
+./instructions -> ./projects/[現在のプロジェクト]/instructions/
+./workspace -> ./projects/[現在のプロジェクト]/workspace/
+```
+
+### プロジェクト管理コマンド
+```bash
+# 対話式プロジェクト選択
+./project-manager.sh
+
+# プロジェクト一覧表示
+./project-manager.sh list
+
+# プロジェクト直接選択
+./project-manager.sh select programming-organization
+
+# 現在のプロジェクト表示
+./project-manager.sh current
+
+# 指示書編集
+./project-manager.sh edit
+```
+
+### 統合起動スクリプト
+```bash
+# 対話式起動（推奨）
+./setup.sh
+
+# プロジェクト指定起動
+./setup.sh --project programming-organization
+```
 
 ## 🏢 登場人物（エージェント）
 
@@ -88,18 +145,75 @@ cd Claude-Code-Communication
 - **worker2**: データ処理担当
 - **worker3**: テスト担当
 
-## 💬 どうやってコミュニケーションする？
+## 🖥️ 画面操作とスクリプト使い分け
 
-### メッセージの送り方
+### 利用可能なスクリプト
+
+| スクリプト名 | 用途 | 起動対象 |
+|-------------|------|----------|
+| `./setup.sh` | 統合セットアップ | プロジェクト選択→環境構築→エージェント起動 |
+| `./launch-president.sh` | PRESIDENT単独起動 | プロジェクト統括責任者のみ |
+| `./launch-team.sh` | チーム起動 | boss1 + worker1-3 |
+
+### 画面構成
+**PRESIDENT画面**
 ```bash
-./agent-send.sh [相手の名前] "[メッセージ]"
+tmux attach-session -t president
+```
+
+**チーム画面（4分割）**
+```bash
+tmux attach-session -t multiagent
+```
+```
+┌────────┬────────┐
+│ boss1  │worker1 │  ← 左上：boss1、右上：worker1
+├────────┼────────┤
+│worker3 │worker2 │  ← 左下：worker3、右下：worker2
+└────────┴────────┘
+```
+
+### tmux基本操作
+```bash
+# セッション一覧表示
+tmux ls
+
+# セッションに接続
+tmux attach-session -t president    # 社長画面
+tmux attach-session -t multiagent   # チーム画面
+
+# セッションから切り離し（Ctrl+b → d）
+# ※ エージェントは動き続ける
+
+# ペイン間の移動（tmux画面内で）
+Ctrl+b → 矢印キー
+```
+
+## 💬 メッセージ送信システム
+
+### agent-send.shの使用
+```bash
+# 基本形式
+./agent-send.sh [相手] "[メッセージ]"
 
 # 例：マネージャーに送る
 ./agent-send.sh boss1 "新しいプロジェクトです"
 
 # 例：作業者1に送る
 ./agent-send.sh worker1 "UIを作ってください"
+
+# 例：全員に一斉送信
+for agent in boss1 worker1 worker2 worker3; do
+  ./agent-send.sh $agent "定例ミーティングを開始します"
+done
 ```
+
+### メッセージの対象
+- `president` - 社長
+- `boss1` - チームリーダー
+- `worker1` - 作業者1（通常：フロントエンド）
+- `worker2` - 作業者2（通常：バックエンド）
+- `worker3` - 作業者3（通常：インフラ/テスト）
 
 ### 実際のやり取りの例
 
@@ -134,10 +248,42 @@ UIデザインの革新的アイデアを3つ以上提案してください。
    革新性：[何が新しいか]
 ```
 
+## ⚙️ 設定ファイル
+
+### gemini-config.json
+```json
+{
+  "model": "gemini-2.5-flash",
+  "yolo_mode": true,
+  "debug": false,
+  "sandbox": false,
+  "all_files": false,
+  "show_memory_usage": false,
+  "telemetry": false
+}
+```
+
+**設定項目：**
+- `model`: 使用するGeminiモデル
+- `yolo_mode`: 自動承認モード（trueで確認なし）
+- `debug`: デバッグモード
+- `all_files`: 全ファイルをコンテキストに含める
+
+### モデル変更
+```bash
+# config編集
+nano gemini-config.json
+
+# 例：モデルを変更
+{
+  "model": "gemini-2.0-flash-exp"
+}
+```
+
 ## 📁 重要なファイルの説明
 
 ### 指示書（instructions/）
-各エージェントの行動マニュアルです
+各エージェントの行動マニュアルです（プロジェクト固有）
 
 **president.md** - 社長の指示書
 ```markdown
@@ -175,46 +321,83 @@ UIデザインの革新的アイデアを3つ以上提案してください。
 3. 完了したら報告
 ```
 
-### CLAUDE.md
-システム全体の設定ファイル
-```markdown
-# Agent Communication System
+## 🔄 ワークフロー例
 
-## エージェント構成
-- PRESIDENT: 統括責任者
-- boss1: チームリーダー  
-- worker1,2,3: 実行担当
+### Webアプリ開発の場合
 
-## メッセージ送信
-./agent-send.sh [相手] "[メッセージ]"
+1. **PRESIDENT**: 要件定義
+```
+あなたはpresidentです。
+ECサイトを作成してください。商品一覧、カート機能、決済機能を含む。
 ```
 
-## 🎨 実際に作られたもの：EmotiFlow
+2. **boss1**: タスク分解・指示
+```
+あなたはboss1です。
+以下のタスクを分担してください：
+- worker1: フロントエンド（React）
+- worker2: バックエンド（Node.js + Express）
+- worker3: データベース設計とテスト
+```
 
-### 何ができた？
-- 😊 絵文字で感情を表現できるアンケート
-- 📊 リアルタイムで結果が見られる
-- 📱 スマホでも使える
+3. **worker1-3**: 並行作業
+各自が専門分野の実装を進行
 
-### 試してみる
+4. **boss1**: 統合・品質管理
+完成したコンポーネントを統合
+
+5. **PRESIDENT**: 最終確認・承認
+
+## 💼 プロジェクト使用例
+
+### Webアプリ開発プロジェクト
+
+#### 1. プロジェクト作成
 ```bash
-cd emotiflow-mvp
-python -m http.server 8000
-# ブラウザで http://localhost:8000 を開く
+mkdir -p ./projects/webapp-dashboard/{instructions,workspace}
+./project-manager.sh select webapp-dashboard
 ```
 
-### ファイル構成
-```
-emotiflow-mvp/
-├── index.html    # メイン画面
-├── styles.css    # デザイン
-├── script.js     # 動作ロジック
-└── tests/        # テスト
+#### 2. 指示書カスタマイズ
+```bash
+./project-manager.sh edit
 ```
 
-## 🔧 困ったときは
+**president.md の例:**
+```markdown
+# 👑 WebApp Dashboard - PRESIDENT指示書
 
-### Q: エージェントが反応しない
+## プロジェクト目標
+管理者向けダッシュボードWebアプリケーションの開発
+
+## 技術要件
+- フロントエンド: React + TypeScript + Tailwind CSS
+- バックエンド: Node.js + Express + PostgreSQL
+- 認証: JWT
+- デプロイ: Docker + AWS ECS
+
+## 成功基準
+- レスポンス時間: 2秒以内
+- セキュリティ: OWASP準拠
+- テストカバレッジ: 80%以上
+```
+
+#### 3. システム起動
+```bash
+./setup.sh
+```
+
+#### 4. プロジェクト開始
+PRESIDENT画面で:
+```
+あなたはpresidentです。
+管理者向けダッシュボードWebアプリケーションを作成してください。
+ユーザー管理、データ分析、レポート機能を含む包括的なシステムです。
+```
+
+## 🛠️ トラブルシューティング
+
+### エージェントが反応しない
 ```bash
 # 状態を確認
 tmux ls
@@ -229,16 +412,29 @@ tmux attach-session -t multiagent  # チーム画面
 ./launch-team.sh
 ```
 
-### Q: メッセージが届かない
+### 応答が遅い・止まった
+```bash
+# 現在の状態確認
+tmux attach-session -t multiagent
+
+# 特定のエージェントを再起動
+tmux send-keys -t multiagent:0.1 C-c    # worker1を停止
+tmux send-keys -t multiagent:0.1 "gemini -m 'gemini-2.5-flash' -y" C-m  # 再起動
+```
+
+### メッセージが届かない
 ```bash
 # ログを見る
 cat logs/send_log.txt
 
 # 手動でテスト
 ./agent-send.sh boss1 "テスト"
+
+# エージェント状態確認
+tmux capture-pane -t multiagent:0.0 -p  # boss1の画面内容を確認
 ```
 
-### Q: 最初からやり直したい
+### 全体リセット
 ```bash
 # 全部リセット
 tmux kill-server
@@ -246,50 +442,121 @@ rm -rf ./tmp/*
 ./setup.sh
 ```
 
-## 🚀 自分のプロジェクトを作る
+### プロジェクト関連のトラブル
 
-### 簡単な例：TODOアプリを作る
+#### プロジェクトが見つからない
+```bash
+# プロジェクト一覧確認
+./project-manager.sh list
 
-社長（PRESIDENT）で入力：
+# プロジェクトディレクトリ確認
+ls -la ./projects/
+
+# 手動作成
+mkdir -p ./projects/my-project/{instructions,workspace}
+```
+
+#### シンボリックリンクの問題
+```bash
+# 現在のリンク確認
+ls -la ./instructions ./workspace
+
+# リンクを再作成
+./project-manager.sh select [プロジェクト名]
+```
+
+## 💡 効果的な使い方のコツ
+
+### 1. 明確な指示
+❌ 悪い例：
+```
+何か作って
+```
+
+✅ 良い例：
 ```
 あなたはpresidentです。
-TODOアプリを作ってください。
-シンプルで使いやすく、タスクの追加・削除・完了ができるものです。
+
+【プロジェクト】カフェの予約システム
+【機能】
+- 席の予約・キャンセル
+- 空席状況の確認
+- 顧客情報管理
+
+【技術要件】
+- フロントエンド：React + TypeScript
+- バックエンド：Node.js + Express
+- データベース：PostgreSQL
+
+【成功基準】
+- レスポンス時間1秒以内
+- 同時アクセス100人対応
+- テストカバレッジ80%以上
 ```
 
-すると自動的に：
-1. マネージャーがタスクを分解
-2. worker1がUI作成
-3. worker2がデータ管理
-4. worker3がテスト作成
-5. 完成！
-
-## 📊 システムの仕組み（図解）
-
-### 画面構成
-```
-┌─────────────────┐
-│   PRESIDENT     │ ← 社長の画面（紫色）
-└─────────────────┘
-
-┌────────┬────────┐
-│ boss1  │worker1 │ ← マネージャー（赤）と作業者1（青）
-├────────┼────────┤
-│worker2 │worker3 │ ← 作業者2と3（青）
-└────────┴────────┘
+### 2. 定期的な進捗確認
+```bash
+# 30分ごとに状況確認
+./agent-send.sh boss1 "現在の進捗状況を報告してください"
 ```
 
-### コミュニケーションの流れ
+### 3. 役割の明確化
+各エージェントの専門分野を活かす：
+- **worker1**: UI/UX、フロントエンド
+- **worker2**: API、データ処理
+- **worker3**: インフラ、テスト、デプロイ
+
+### あなたの役割（各エージェント用）
+- **PRESIDENT**: @instructions/president.md
+- **boss1**: @instructions/boss.md
+- **worker1,2,3**: @instructions/worker.md
+
+## 🎯 推奨ワークフロー
+
+### 新規プロジェクト開始時
+
+1. **プロジェクト準備**
+   ```bash
+   mkdir -p ./projects/my-project/{instructions,workspace}
+   ./start.sh --project my-project
+   ```
+
+2. **PRESIDENT起動 & 要件定義**
+   - 簡単なタスク → PRESIDENT単独で完了
+   - 複雑なタスク → チーム起動を推奨
+
+3. **チーム起動（必要に応じて）**
+   ```bash
+   # チーム画面で各メンバーに役割通知
+   ```
+
+### 継続プロジェクト時
+
+```bash
+# プロジェクト選択→起動
+./setup.sh
 ```
-社長
- ↓ 「ビジョンを実現して」
-マネージャー
- ↓ 「みんな、アイデア出して」
-作業者たち
- ↓ 「できました！」
-マネージャー
- ↓ 「全員完了です」
-社長
+
+## 📊 進捗管理
+
+### 完了マーカーファイル
+```bash
+# 作業完了時に自動作成される
+./tmp/worker1_done.txt
+./tmp/worker2_done.txt  
+./tmp/worker3_done.txt
+
+# 進捗確認
+ls -la ./tmp/worker*_done.txt
+```
+
+### ログファイル
+```bash
+# メッセージ送信ログ
+tail -f logs/send_log.txt
+
+# 進捗ログ
+tail -f logs/progress.log
 ```
 
 ### 進捗管理の仕組み
@@ -319,37 +586,13 @@ TODOアプリを作ってください。
 - アイデアが豊富
 - 品質が高い
 
-## 🎓 もっと詳しく知りたい人へ
+## 📊 パフォーマンス比較
 
-### プロンプトの書き方
-
-**良い例：**
-```
-あなたはboss1です。
-
-【プロジェクト名】明確な名前
-【ビジョン】具体的な理想
-【成功基準】測定可能な指標
-```
-
-**悪い例：**
-```
-何か作って
-```
-
-### カスタマイズ方法
-
-**新しい作業者を追加：**
-1. `instructions/worker4.md`を作成
-2. `setup.sh`を編集してペインを追加
-3. `agent-send.sh`にマッピングを追加
-
-**タイマーを変更：**
-```bash
-# instructions/boss.md の中の
-sleep 600  # 10分を5分に変更するなら
-sleep 300
-```
+| 起動方式 | メモリ使用量 | 起動時間 | 監視しやすさ | 使いやすさ |
+|---------|-------------|----------|-------------|-----------|
+| PRESIDENT単独 | 最小 | 最速 | ★★★ | ★★★★★ |
+| チーム4分割 | 中程度 | 普通 | ★★★★★ | ★★★★ |
+| 統合起動 | 中程度 | 普通 | ★★★★ | ★★★★★ |
 
 ## 🌟 まとめ
 
@@ -358,6 +601,8 @@ sleep 300
 - **12個**の革新的アイデアを生成
 - **100%**のテストカバレッジを実現
 
+プロジェクト管理システムにより、複数のプロジェクトを効率的に管理し、それぞれに最適化されたAIエージェントチームで開発を進めることができます。
+
 ぜひ試してみて、AIチームの力を体験してください！
 
 ---
@@ -365,7 +610,6 @@ sleep 300
 **作者**: [GitHub](https://github.com/nishimoto265/Claude-Code-Communication)
 **ライセンス**: MIT
 **質問**: [Issues](https://github.com/nishimoto265/Claude-Code-Communication/issues)へどうぞ！
-
 
 ## 参考リンク
     
@@ -405,5 +649,4 @@ nishimoto265/Claude-Code-Communication
     
 ◇Claude Code公式解説動画：   
 Mastering Claude Code in 30 minutes - YouTube   
-　　URL: https://www.youtube.com/live/6eBSHbLKuN0?t=1356s  
-   
+　　URL: https://www.youtube.com/live/6eBSHbLKuN0?t=1356s
