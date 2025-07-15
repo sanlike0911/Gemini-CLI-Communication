@@ -3,7 +3,7 @@
 複数のAIが協力して働く、まるで会社のような開発システムです（Gemini CLI版）
 
 ## 移植バージョン
-フォーク元のプロジェクトのClaude Code CLI を使用していたAI組織システムを Gemini CLI に移植しました。
+フォーク元のプロジェクトの「Claude Code CLI」を使用していたAI組織システムを、「Gemini-2.5-pro」によって「Gemini CLI」に移植されました。
 
 ## 📌 これは何？
 
@@ -79,6 +79,20 @@ cd Claude-Code-Communication
 2. マネージャーが3人の作業者に仕事を割り振り
 3. みんなで協力して開発
 4. 完成したら社長に報告
+
+#### 5️⃣ 組織の動作フロー
+```
+PRESIDENT → boss1 → worker1,2,3 → boss1 → PRESIDENT
+```
+
+**具体的な流れ：**
+1. **PRESIDENT**が`./agent-send.sh boss1 "指示内容"`でboss1に指示
+2. **boss1**が各workerに専門分野を割り当て
+   - `./agent-send.sh worker1 "ビジネス戦略担当"`
+   - `./agent-send.sh worker2 "技術・データ担当"`
+   - `./agent-send.sh worker3 "マーケティング・営業担当"`
+3. **各worker**が`./agent-send.sh boss1 "完了報告"`でboss1に報告
+4. **boss1**が`./agent-send.sh president "統合報告"`でPRESIDENTに報告
 
 ## 🗂️ プロジェクト管理システム
 
