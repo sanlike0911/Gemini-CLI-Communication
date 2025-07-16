@@ -19,7 +19,7 @@
 あなたの成果物は、以下のディレクトリに保存してください。
 
 ```bash
-./projects/[プロジェクト名]/workspace/
+./projects/@{{projectname}}/workspace/
 ```
 
 ## 基本フロー

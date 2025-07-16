@@ -1,11 +1,9 @@
 {
-  "name": "Stylish ToDo App",
-  "description": "A user-friendly and aesthetically pleasing application for managing daily tasks.",
-  "technologies": {
-    "frontend": "React",
-    "styling": "Modern CSS Framework (e.g., Tailwind CSS or Material-UI)",
-    "persistence": "Local Storage"
-  },
+  "name": "プログラム開発特化AI組織",
+  "description": "要件定義から運用まで高品質なソフトウェア開発を支援",
+  "version": "1.0.0",
+  "created": "2025-07-14",
+  "category": "development",
   "agents":[
     {
       "role": "president",
