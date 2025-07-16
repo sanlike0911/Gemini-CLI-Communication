@@ -219,18 +219,28 @@ update_gemini_agents() {
         return 1
     fi
     
-    # GEMINI.mdの@{{agents}}と@{{roles}}を置換
+    # GEMINI.mdの@{{agents}}、@{{roles}}、@{{projectname}}を置換
     if [ -f "./GEMINI.md" ]; then
         # 一時ファイルを作成して置換
         local temp_file=$(mktemp)
         
-        # @{{agents}}と@{{roles}}を実際の情報で置換
-        awk -v agents="$agents_content" -v roles="$roles_content" '{
+        # プロジェクト名を取得（.current-projectから）
+        local project_name=""
+        if [ -f ".current-project" ]; then
+            project_name=$(cat ".current-project")
+        else
+            project_name="未選択"
+        fi
+        
+        # @{{agents}}、@{{roles}}、@{{projectname}}を実際の情報で置換
+        awk -v agents="$agents_content" -v roles="$roles_content" -v projectname="$project_name" '{
             if ($0 == "@{{agents}}") {
                 printf "%s", agents
             } else if ($0 == "@{{roles}}") {
                 printf "%s", roles
             } else {
+                # @{{projectname}}を置換（行内のどこにあってもOK）
+                gsub(/@\{\{projectname\}\}/, projectname)
                 print $0
             }
         }' "./GEMINI.md" > "$temp_file"
@@ -238,7 +248,7 @@ update_gemini_agents() {
         # 元ファイルに上書き
         mv "$temp_file" "./GEMINI.md"
         
-        log_success "✅ GEMINI.mdのagents情報とroles情報を更新しました"
+        log_success "✅ GEMINI.mdのagents情報、roles情報、プロジェクト名を更新しました"
     else
         log_warning "GEMINI.mdファイルが見つかりません"
         return 1
