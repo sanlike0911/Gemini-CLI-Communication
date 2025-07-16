@@ -26,14 +26,13 @@ echo "👑 PRESIDENT起動スクリプト"
 echo "========================="
 
 # プロジェクト確認
-if [ -L "./instructions" ]; then
-    instructions_link=$(readlink "./instructions")
-    project_dir=$(dirname "$instructions_link")
-    current_project=$(basename "$project_dir")
+if [ -f ".current-project" ]; then
+    current_project=$(cat ".current-project")
+    project_dir="./projects/$current_project"
     echo "📂 プロジェクト: $current_project"
 else
     echo "⚠️  プロジェクトが選択されていません"
-    echo "   先に ./setup.sh を実行してプロジェクトを選択してください"
+    echo "   先に ./project-manager.sh select を実行してプロジェクトを選択してください"
 fi
 echo ""
 
@@ -70,15 +69,22 @@ setup_president_session() {
     log_info "既存のpresidentセッションを使用します"
 }
 
-# gemini-config.jsonから設定を読み込む関数
-get_model_from_config() {
-    if [ -f "./gemini-config.json" ]; then
-        # jqが利用可能な場合
-        if command -v jq &> /dev/null; then
-            jq -r ".model" "./gemini-config.json" 2>/dev/null || echo "gemini-2.5-flash"
+# project.jsonからpresident用のmodel設定を読み込む関数
+get_president_model() {
+    if [ -f ".current-project" ]; then
+        local current_project=$(cat ".current-project")
+        local project_file="./projects/$current_project/project.json"
+        
+        if [ -f "$project_file" ]; then
+            # jqが利用可能な場合
+            if command -v jq &> /dev/null; then
+                jq -r '.agents[] | select(.role == "president") | .model' "$project_file" 2>/dev/null || echo "gemini-2.5-flash"
+            else
+                # jqが利用できない場合は基本的なgrep/sedで解析
+                grep -A 5 '"role":[[:space:]]*"president"' "$project_file" | grep '"model"' | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | head -1 || echo "gemini-2.5-flash"
+            fi
         else
-            # jqが利用できない場合はgrep/sedで解析
-            grep '"model"' "./gemini-config.json" | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | head -1
+            echo "gemini-2.5-flash"
         fi
     else
         echo "gemini-2.5-flash"
@@ -89,8 +95,8 @@ get_model_from_config() {
 launch_president() {
     log_info "PRESIDENT（統括責任者）を起動中（自動承認モード）..."
     
-    # コンフィグベースでGemini CLI起動
-    local model=$(get_model_from_config)
+    # プロジェクト設定ベースでGemini CLI起動
+    local model=$(get_president_model)
     log_info "使用モデル: $model"
     tmux send-keys -t president "gemini -m '$model' -y" C-m
     sleep 1
@@ -105,7 +111,7 @@ show_usage() {
 📋 PRESIDENTの使用方法:
 
 1. 認証完了後、以下のメッセージで起動:
-   「あなたはPRESIDENTです。instructions/president.mdに従って行動してください。」
+   「あなたはPRESIDENTです。$project_dir/instructions/president.mdに従って行動してください。」
 
 2. プロジェクト指示例:
    「カフェのホームページを作成してください。モダンなデザインで、React + TypeScript + Tailwind CSSを使用。」

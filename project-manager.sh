@@ -25,6 +25,42 @@ log_error() {
 # プロジェクトディレクトリ（相対パス）
 PROJECTS_ROOT="./projects"
 
+# jq無しでagents配列を解析する関数
+parse_agents_without_jq() {
+    local project_file="$1"
+    
+    # agents配列内のフィールドのみを抽出（プロジェクト名などを除外）
+    # agents配列の行番号範囲を取得
+    local agents_start=$(grep -n '"agents"' "$project_file" | cut -d: -f1)
+    local agents_end=$(tail -n +$agents_start "$project_file" | grep -n ']' | head -1 | cut -d: -f1)
+    agents_end=$((agents_start + agents_end - 1))
+    
+    # agents配列内のrole, name, modelのみを抽出
+    local roles=($(sed -n "${agents_start},${agents_end}p" "$project_file" | grep '"role"' | sed 's/.*"role"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/'))
+    local names=($(sed -n "${agents_start},${agents_end}p" "$project_file" | grep '"name"' | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/'))
+    local models=($(sed -n "${agents_start},${agents_end}p" "$project_file" | grep '"model"' | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/'))
+    
+    # 配列の要素数を確認
+    local count=${#roles[@]}
+    
+    # 各エージェントの情報を表示
+    for ((i=0; i<count; i++)); do
+        local role="${roles[$i]}"
+        local name="${names[$i]}"
+        local model="${models[$i]}"
+        
+        if [ -n "$role" ] && [ -n "$name" ] && [ -n "$model" ]; then
+            local role_icon=""
+            case "$role" in
+                "president") role_icon="👑 PRESIDENT" ;;
+                "boss1") role_icon="🎯 boss1" ;;
+                *) role_icon="⚡ $role" ;;
+            esac
+            echo "     $role_icon │ $name │ $model"
+        fi
+    done
+}
+
 # プロジェクトディレクトリ作成
 ensure_projects_dir() {
     if [ ! -d "$PROJECTS_ROOT" ]; then
@@ -95,13 +131,15 @@ select_project_interactive() {
         local project_dir="$PROJECTS_ROOT/$project_name"
         
         # プロジェクト情報を表示
+        echo "  $num. 📂 $project_name"
+        echo "     ══════════════════════════════════════════════════"
+        
         if [ -f "$project_dir/project.json" ]; then
             # jqが使えない場合のシンプルなJSON解析
             local description=$(grep -o '"description"[[:space:]]*:[[:space:]]*"[^"]*"' "$project_dir/project.json" 2>/dev/null | sed 's/.*"description"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' || echo "説明なし")
             local category=$(grep -o '"category"[[:space:]]*:[[:space:]]*"[^"]*"' "$project_dir/project.json" 2>/dev/null | sed 's/.*"category"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' || echo "")
             local version=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$project_dir/project.json" 2>/dev/null | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' || echo "")
             
-            echo "  $num. $project_name"
             echo "     📝 $description"
             if [ -n "$category" ]; then
                 echo "     🏷️  カテゴリ: $category"
@@ -109,14 +147,31 @@ select_project_interactive() {
             if [ -n "$version" ]; then
                 echo "     📦 バージョン: $version"
             fi
+            echo ""
+            
+            # エージェント設定情報を表示
+            echo "     👥 エージェント構成:"
+            
+            # jqが利用可能な場合
+            if command -v jq &> /dev/null; then
+                jq -r '.agents[] | "     \(.role | if . == \"president\" then \"👑 PRESIDENT\" elif . == \"boss1\" then \"🎯 boss1\" else \"⚡ \(.)\" end) │ \(.name) │ \(.model)"' "$project_dir/project.json" 2>/dev/null || {
+                    echo "     ❌ エージェント情報の読み込みに失敗しました"
+                }
+            else
+                # jqが使えない場合は自作の解析関数を使用
+                parse_agents_without_jq "$project_dir/project.json"
+            fi
+            
+            echo "     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         else
-            echo "  $num. $project_name"
-            echo "     📝 (project.json が見つかりません)"
+            echo "     ❌ project.json が見つかりません"
+            echo "     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         fi
         echo ""
     done
     
-    echo "選択肢:"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🎯 選択肢:"
     echo "  1-$project_count: プロジェクトを選択"
     echo "  0: 終了"
     echo ""
@@ -157,37 +212,33 @@ select_project() {
         exit 1
     fi
     
-    # プロジェクト固有の指示書をシンボリックリンク
-    rm -rf ./instructions 2>/dev/null || true
-    ln -sf "$project_dir/instructions" ./instructions
-    
     # 作業ディレクトリの準備
     mkdir -p "$project_dir/workspace"
-    rm -rf ./workspace 2>/dev/null || true
-    ln -sf "$project_dir/workspace" ./workspace
+    
+    # 選択されたプロジェクトを設定ファイルに記録
+    echo "$project_name" > .current-project
     
     log_success "✅ プロジェクト '$project_name' を選択しました"
     echo "📁 プロジェクトディレクトリ: $project_dir"
-    echo "📋 指示書: ./instructions/"
-    echo "💼 作業ディレクトリ: ./workspace/"
+    echo "📋 指示書: $project_dir/instructions/"
+    echo "💼 作業ディレクトリ: $project_dir/workspace/"
 }
 
-# 現在のプロジェクト表示（シンボリックリンクベース）
+# 現在のプロジェクト表示
 show_current() {
-    if [ ! -L "./instructions" ]; then
+    if [ ! -f ".current-project" ]; then
         echo "現在選択されているプロジェクトはありません"
         echo ""
         list_projects
         return 1
     fi
     
-    local instructions_link=$(readlink "./instructions")
-    local project_dir=$(dirname "$instructions_link")
-    local current_project=$(basename "$project_dir")
+    local current_project=$(cat ".current-project")
+    local project_dir="$PROJECTS_ROOT/$current_project"
     
     if [ ! -d "$project_dir" ]; then
-        log_warning "リンクされたプロジェクト '$current_project' が見つかりません"
-        rm -f "./instructions" "./workspace"
+        log_warning "設定されたプロジェクト '$current_project' が見つかりません"
+        rm -f ".current-project"
         return 1
     fi
     
@@ -203,15 +254,14 @@ show_current() {
 
 # 指示書編集
 edit_instructions() {
-    if [ ! -L "./instructions" ]; then
+    if [ ! -f ".current-project" ]; then
         log_error "プロジェクトが選択されていません"
         echo "プロジェクトを選択してください: $0 select [プロジェクト名]"
         exit 1
     fi
     
-    local instructions_link=$(readlink "./instructions")
-    local project_dir=$(dirname "$instructions_link")
-    local current_project=$(basename "$project_dir")
+    local current_project=$(cat ".current-project")
+    local project_dir="$PROJECTS_ROOT/$current_project"
     local instructions_dir="$project_dir/instructions"
     
     echo "📝 指示書編集: $current_project"

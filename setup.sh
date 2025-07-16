@@ -135,6 +135,116 @@ create_tmux_sessions() {
     echo ""
 }
 
+# agents配列をGEMINI.mdに反映
+update_gemini_agents() {
+    # 現在のプロジェクトファイルを読み取り
+    local current_project_file=""
+    if [ -f ".current-project" ]; then
+        current_project_file=$(cat .current-project)
+    else
+        log_error ".current-projectファイルが見つかりません"
+        return 1
+    fi
+    
+    local project_json_path="./projects/$current_project_file/project.json"
+    
+    if [ ! -f "$project_json_path" ]; then
+        log_error "プロジェクトファイルが見つかりません: $project_json_path"
+        return 1
+    fi
+    
+    log_info "📝 GEMINI.mdのagents情報を更新中..."
+    
+    # GEMINI.md.defaultからGEMINI.mdにコピー
+    if [ -f "./GEMINI.md.default" ]; then
+        cp "./GEMINI.md.default" "./GEMINI.md"
+        log_info "GEMINI.md.defaultからGEMINI.mdにコピーしました"
+    else
+        log_warning "GEMINI.md.defaultファイルが見つかりません"
+    fi
+    
+    # agents配列を読み取り、フォーマットを作成
+    local agents_content=""
+    local roles_content=""
+    
+    # grepとsedを使ってagents配列を処理
+    local in_agents=false
+    local role="" session="" name="" instructionFileName=""
+    
+    while IFS= read -r line; do
+        # agents配列の開始を検出
+        if [[ "$line" == *'"agents"'* && "$line" == *'['* ]]; then
+            in_agents=true
+            continue
+        fi
+        
+        # agents配列の終了を検出
+        if [ "$in_agents" = true ] && [[ "$line" == *']'* ]]; then
+            break
+        fi
+        
+        # agents配列内でエージェント情報を抽出
+        if [ "$in_agents" = true ]; then
+            # role抽出
+            if [[ "$line" == *'"role"'* ]]; then
+                role=$(echo "$line" | sed 's/.*"role"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+            fi
+            
+            # session抽出
+            if [[ "$line" == *'"session"'* ]]; then
+                session=$(echo "$line" | sed 's/.*"session"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+            fi
+            
+            # name抽出
+            if [[ "$line" == *'"name"'* ]]; then
+                name=$(echo "$line" | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+            fi
+            
+            # instructionFileName抽出
+            if [[ "$line" == *'"instructionFileName"'* ]]; then
+                instructionFileName=$(echo "$line" | sed 's/.*"instructionFileName"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+                
+                # role, session, name, instructionFileNameが揃ったら出力
+                if [ -n "$role" ] && [ -n "$session" ] && [ -n "$name" ] && [ -n "$instructionFileName" ]; then
+                    agents_content+="- **${role}** (${session}): ${name}"$'\n'
+                    roles_content+="- **${role}**: @instructions/projects/${current_project_file}/${instructionFileName}"$'\n'
+                    role="" session="" name="" instructionFileName=""
+                fi
+            fi
+        fi
+    done < "$project_json_path"
+    
+    if [ -z "$agents_content" ]; then
+        log_warning "agents配列が空か、JSONの解析に失敗しました"
+        return 1
+    fi
+    
+    # GEMINI.mdの@{{agents}}と@{{roles}}を置換
+    if [ -f "./GEMINI.md" ]; then
+        # 一時ファイルを作成して置換
+        local temp_file=$(mktemp)
+        
+        # @{{agents}}と@{{roles}}を実際の情報で置換
+        awk -v agents="$agents_content" -v roles="$roles_content" '{
+            if ($0 == "@{{agents}}") {
+                printf "%s", agents
+            } else if ($0 == "@{{roles}}") {
+                printf "%s", roles
+            } else {
+                print $0
+            }
+        }' "./GEMINI.md" > "$temp_file"
+        
+        # 元ファイルに上書き
+        mv "$temp_file" "./GEMINI.md"
+        
+        log_success "✅ GEMINI.mdのagents情報とroles情報を更新しました"
+    else
+        log_warning "GEMINI.mdファイルが見つかりません"
+        return 1
+    fi
+}
+
 # セットアップ完了情報表示
 show_setup_completion() {
     echo ""
@@ -160,11 +270,8 @@ show_setup_completion() {
     echo ""
     echo "📋 次のステップ:"
     echo "  PRESIDENT起動: ./launch-president.sh"
-    echo "  チーム起動:     ./launch-team.sh"
+    echo "  TEAM起動:     ./launch-team.sh"
     echo ""
-    echo "画面接続:"
-    echo "  tmux attach-session -t president   # PRESIDENT画面"
-    echo "  tmux attach-session -t multiagent  # チーム画面"
 }
 
 
@@ -232,6 +339,9 @@ main() {
     
     # tmuxセッション作成
     create_tmux_sessions
+    
+    # GEMINI.mdのagents情報を更新
+    update_gemini_agents
     
     # セットアップ完了表示
     show_setup_completion

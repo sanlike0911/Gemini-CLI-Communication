@@ -26,14 +26,13 @@ echo "🎯 チーム起動スクリプト"
 echo "======================="
 
 # プロジェクト確認
-if [ -L "./instructions" ]; then
-    instructions_link=$(readlink "./instructions")
-    project_dir=$(dirname "$instructions_link")
-    current_project=$(basename "$project_dir")
+if [ -f ".current-project" ]; then
+    current_project=$(cat ".current-project")
+    project_dir="./projects/$current_project"
     echo "📂 プロジェクト: $current_project"
 else
     echo "⚠️  プロジェクトが選択されていません"
-    echo "   先に ./setup.sh を実行してプロジェクトを選択してください"
+    echo "   先に ./project-manager.sh select を実行してプロジェクトを選択してください"
 fi
 echo ""
 
@@ -70,15 +69,23 @@ setup_multiagent_session() {
     log_info "既存のmultiagentセッションを使用します"
 }
 
-# gemini-config.jsonから設定を読み込む関数
-get_model_from_config() {
-    if [ -f "./gemini-config.json" ]; then
-        # jqが利用可能な場合
-        if command -v jq &> /dev/null; then
-            jq -r ".model" "./gemini-config.json" 2>/dev/null || echo "gemini-2.5-flash"
+# project.jsonからエージェント用のmodel設定を読み込む関数
+get_agent_model() {
+    local role=$1
+    if [ -f ".current-project" ]; then
+        local current_project=$(cat ".current-project")
+        local project_file="./projects/$current_project/project.json"
+        
+        if [ -f "$project_file" ]; then
+            # jqが利用可能な場合
+            if command -v jq &> /dev/null; then
+                jq -r ".agents[] | select(.role == \"$role\") | .model" "$project_file" 2>/dev/null || echo "gemini-2.5-flash"
+            else
+                # jqが利用できない場合は基本的なgrep/sedで解析
+                grep -A 5 "\"role\":[[:space:]]*\"$role\"" "$project_file" | grep '"model"' | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | head -1 || echo "gemini-2.5-flash"
+            fi
         else
-            # jqが利用できない場合はgrep/sedで解析
-            grep '"model"' "./gemini-config.json" | sed 's/.*"model"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | head -1
+            echo "gemini-2.5-flash"
         fi
     else
         echo "gemini-2.5-flash"
@@ -96,9 +103,18 @@ launch_team_member() {
     # ペインにフォーカス
     tmux select-pane -t "$target"
     
-    # コンフィグベースでGemini CLI起動
-    local model=$(get_model_from_config)
-    log_info "使用モデル: $model"
+    # プロジェクト設定ベースでGemini CLI起動
+    # ペイン番号からエージェントロールを特定
+    local role="boss1"
+    case $pane_id in
+        0) role="boss1" ;;
+        1) role="woker1" ;;
+        2) role="woker2" ;;
+        3) role="woker3" ;;
+    esac
+    
+    local model=$(get_agent_model "$role")
+    log_info "使用モデル ($role): $model"
     tmux send-keys -t "$target" "gemini -m '$model' -y" C-m
     sleep 0.5
     
@@ -135,16 +151,16 @@ show_usage() {
 1. 各メンバーの認証完了後、それぞれに役割を通知:
 
    boss1への指示:
-   「あなたはboss1です。instructions/boss.mdに従って行動してください。」
+   「あなたはboss1です。$project_dir/instructions/boss.mdに従って行動してください。」
 
    worker1への指示:
-   「あなたはworker1です。instructions/worker.mdに従って行動してください。」
+   「あなたはworker1です。$project_dir/instructions/worker.mdに従って行動してください。」
 
    worker2への指示:
-   「あなたはworker2です。instructions/worker.mdに従って行動してください。」
+   「あなたはworker2です。$project_dir/instructions/worker.mdに従って行動してください。」
 
    worker3への指示:
-   「あなたはworker3です。instructions/worker.mdに従って行動してください。」
+   「あなたはworker3です。$project_dir/instructions/worker.mdに従って行動してください。」
 
 2. チーム画面に接続:
    tmux attach-session -t multiagent

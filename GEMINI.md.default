@@ -1,0 +1,27 @@
+# Agent Communication System
+
+## エージェント構成
+
+@{{agents}}
+
+## あなたの役割
+
+@{{roles}}
+
+## メッセージ送信
+
+```bash
+./agent-send.sh [相手] "[メッセージ]"
+```
+
+## 成果物の保存先
+
+あなたの成果物は、以下のディレクトリに保存してください。
+
+```bash
+./projects/[プロジェクト名]/workspace/
+```
+
+## 基本フロー
+
+PRESIDENT → boss1 → workers → boss1 → PRESIDENT

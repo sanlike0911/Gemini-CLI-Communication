@@ -3,5 +3,42 @@
   "description": "ビジネスフレームワークを活用した大胆かつ戦略的な新規事業創出支援組織",
   "version": "1.0.0",
   "created": "2025-01-15",
-  "category": "business-strategy"
+  "category": "business-strategy",
+  "agents":[
+    {
+      "role": "president",
+      "session": "singleagent",
+      "name": "社長",
+      "model": "gemini-2.5-pro",
+      "instructionFileName": "president.md"
+    },
+    {
+      "role": "boss1",
+      "session": "multiagent:0.0",
+      "name": "チームリーダー",
+      "model": "gemini-2.5-pro",
+      "instructionFileName": "boss.md"
+    },
+    {
+      "role": "worker1",
+      "session": "multiagent:0.1",
+      "name": "実行担当者1",
+      "model": "gemini-2.5-flash",
+      "instructionFileName": "worker.md"
+    },
+    {
+      "role": "worker2",
+      "session": "multiagent:0.2",
+      "name": "実行担当者2",
+      "model": "gemini-2.5-flash",
+      "instructionFileName": "worker.md"
+    },
+    {
+      "role": "worker3",
+      "session": "multiagent:0.3",
+      "name": "実行担当者3",
+      "model": "gemini-2.5-flash",
+      "instructionFileName": "worker.md"
+    }
+  ]
 }

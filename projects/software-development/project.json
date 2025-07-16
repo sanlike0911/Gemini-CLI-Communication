@@ -1,7 +1,46 @@
 {
-  "name": "プログラム開発特化AI組織",
-  "description": "要件定義から運用まで高品質なソフトウェア開発を支援",
-  "version": "1.0.0",
-  "created": "2025-07-14",
-  "category": "development"
+  "name": "Stylish ToDo App",
+  "description": "A user-friendly and aesthetically pleasing application for managing daily tasks.",
+  "technologies": {
+    "frontend": "React",
+    "styling": "Modern CSS Framework (e.g., Tailwind CSS or Material-UI)",
+    "persistence": "Local Storage"
+  },
+  "agents":[
+    {
+      "role": "president",
+      "session": "singleagent",
+      "name": "社長",
+      "model": "gemini-2.5-pro",
+      "instructionFileName": "president.md"
+    },
+    {
+      "role": "boss1",
+      "session": "multiagent:0.0",
+      "name": "チームリーダー",
+      "model": "gemini-2.5-pro",
+      "instructionFileName": "boss.md"
+    },
+    {
+      "role": "worker1",
+      "session": "multiagent:0.1",
+      "name": "実行担当者1",
+      "model": "gemini-2.5-flash",
+      "instructionFileName": "worker.md"
+    },
+    {
+      "role": "worker2",
+      "session": "multiagent:0.2",
+      "name": "実行担当者2",
+      "model": "gemini-2.5-flash",
+      "instructionFileName": "worker.md"
+    },
+    {
+      "role": "worker3",
+      "session": "multiagent:0.3",
+      "name": "実行担当者3",
+      "model": "gemini-2.5-flash",
+      "instructionFileName": "worker.md"
+    }
+  ]
 }

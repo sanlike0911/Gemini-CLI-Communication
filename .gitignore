@@ -21,5 +21,8 @@ Thumbs.db
 
 # Claude
 .claude
+
+# project用
 workspace
 node_modules
+.current-project
