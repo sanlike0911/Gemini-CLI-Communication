@@ -3,16 +3,19 @@
 複数のAIが協力して働く、まるで会社のような開発システムです（Gemini CLI版）
 
 ## 移植バージョン
-フォーク元のプロジェクトの「Claude Code CLI」を使用していたAI組織システムを、「Gemini-2.5-pro」によって「Gemini CLI」に移植されました。
+
+フォーク元のプロジェクトで「Claude Code CLI」を使用していたAI組織システムを、「Gemini CLI」に移植したバージョンです。
 
 ## 📌 これは何？
 
 **3行で説明すると：**
+
 1. 複数のAIエージェント（社長・マネージャー・作業者）が協力して開発
 2. それぞれ異なるターミナル画面で動作し、メッセージを送り合う
 3. 人間の組織のように役割分担して、効率的に開発を進める
 
 **実際の成果：**
+
 - 3時間で完成したアンケートシステム（EmotiFlow）
 - 12個の革新的アイデアを生成
 - 100%のテストカバレッジ
@@ -20,19 +23,23 @@
 ## 🚀 クイックスタート
 
 ### 必要なもの
+
 - Mac または Linux
 - tmux（ターミナル分割ツール）
 - Gemini CLI
 
 ### エージェント構成
-- **PRESIDENT** (別セッション): 統括責任者 - Gemini CLIで動作
+
+- **PRESIDENT** (singleagent): 統括責任者 - Gemini CLIで動作
 - **boss1** (multiagent:0.0): チームリーダー - Gemini CLIで動作
 - **worker1,2,3** (multiagent:0.1-3): 実行担当 - Gemini CLIで動作
 
 ### 基本フロー
+
 PRESIDENT → boss1 → workers → boss1 → PRESIDENT
 
 ### Gemini CLI 特有の注意事項
+
 - 認証は各セッションで個別に必要
 - レスポンス形式はClaude Codeとは異なる場合がある
 - ツール利用可能性を確認して使用
@@ -40,9 +47,10 @@ PRESIDENT → boss1 → workers → boss1 → PRESIDENT
 ### 基本的な起動手順
 
 #### 1️⃣ ダウンロード（30秒）
+
 ```bash
-git clone https://github.com/nishimoto265/Claude-Code-Communication.git
-cd Claude-Code-Communication
+git clone https://github.com/sanlike0911/Gemini-CLI-Communication.git
+cd Gemini-CLI-Communication
 ```
 
 #### 2️⃣ システム起動
@@ -69,28 +77,32 @@ cd Claude-Code-Communication
    ```
 
 #### 4️⃣ 魔法の言葉を入力
+
 社長画面で入力：
-```
+
+```md
 あなたはpresidentです。おしゃれな充実したIT企業のホームページを作成して。
 ```
 
 **すると自動的に：**
+
 1. 社長がマネージャーに指示
 2. マネージャーが3人の作業者に仕事を割り振り
 3. みんなで協力して開発
 4. 完成したら社長に報告
 
 #### 5️⃣ 組織の動作フロー
-```
+
+```md
 PRESIDENT → boss1 → worker1,2,3 → boss1 → PRESIDENT
 ```
 
 **具体的な流れ：**
 1. **PRESIDENT**が`./agent-send.sh boss1 "指示内容"`でboss1に指示
 2. **boss1**が各workerに専門分野を割り当て
-   - `./agent-send.sh worker1 "ビジネス戦略担当"`
-   - `./agent-send.sh worker2 "技術・データ担当"`
-   - `./agent-send.sh worker3 "マーケティング・営業担当"`
+   - `./agent-send.sh worker1 "フロントエンド担当"`
+   - `./agent-send.sh worker2 "バックエンド担当"`
+   - `./agent-send.sh worker3 "インフラ・テスト担当"`
 3. **各worker**が`./agent-send.sh boss1 "完了報告"`でboss1に報告
 4. **boss1**が`./agent-send.sh president "統合報告"`でPRESIDENTに報告
 
@@ -155,9 +167,9 @@ PRESIDENT → boss1 → worker1,2,3 → boss1 → PRESIDENT
 - **口癖**: 「革新的なアイデアを3つ以上お願いします」
 
 ### 👷 作業者たち（worker1, 2, 3）
-- **worker1**: デザイン担当（UI/UX）
-- **worker2**: データ処理担当
-- **worker3**: テスト担当
+- **worker1**: フロントエンド担当（UI/UX、React等）
+- **worker2**: バックエンド担当（API、データベース等）
+- **worker3**: インフラ・テスト担当（デプロイ、テスト等）
 
 ## 🖥️ 画面操作とスクリプト使い分け
 
@@ -172,7 +184,7 @@ PRESIDENT → boss1 → worker1,2,3 → boss1 → PRESIDENT
 ### 画面構成
 **PRESIDENT画面**
 ```bash
-tmux attach-session -t president
+tmux attach-session -t singleagent
 ```
 
 **チーム画面（4分割）**
@@ -193,7 +205,7 @@ tmux attach-session -t multiagent
 tmux ls
 
 # セッションに接続
-tmux attach-session -t president    # 社長画面
+tmux attach-session -t singleagent  # 社長画面
 tmux attach-session -t multiagent   # チーム画面
 
 # セッションから切り離し（Ctrl+b → d）
@@ -267,7 +279,6 @@ UIデザインの革新的アイデアを3つ以上提案してください。
 ### gemini-config.json
 ```json
 {
-  "model": "gemini-2.5-flash",
   "yolo_mode": true,
   "debug": false,
   "sandbox": false,
@@ -278,19 +289,29 @@ UIデザインの革新的アイデアを3つ以上提案してください。
 ```
 
 **設定項目：**
-- `model`: 使用するGeminiモデル
 - `yolo_mode`: 自動承認モード（trueで確認なし）
 - `debug`: デバッグモード
+- `sandbox`: サンドボックスモード
 - `all_files`: 全ファイルをコンテキストに含める
+- `show_memory_usage`: メモリ使用量表示
+- `telemetry`: テレメトリー送信
+
+**注意**: モデル設定は各プロジェクトのproject.jsonファイルで管理されます。
 
 ### モデル変更
+プロジェクトごとのモデル変更は、project.jsonファイルを編集します：
 ```bash
-# config編集
-nano gemini-config.json
+# プロジェクト設定編集
+nano ./projects/[プロジェクト名]/project.json
 
-# 例：モデルを変更
+# 例：各エージェントのモデル変更
 {
-  "model": "gemini-2.0-flash-exp"
+  "agents": [
+    {
+      "role": "president",
+      "model": "gemini-2.0-flash-exp"
+    }
+  ]
 }
 ```
 
@@ -417,7 +438,7 @@ PRESIDENT画面で:
 tmux ls
 
 # 各画面の状態確認
-tmux attach-session -t president   # 社長画面
+tmux attach-session -t singleagent # 社長画面
 tmux attach-session -t multiagent  # チーム画面
 
 # 再起動
@@ -516,9 +537,9 @@ ls -la ./instructions ./workspace
 
 ### 3. 役割の明確化
 各エージェントの専門分野を活かす：
-- **worker1**: UI/UX、フロントエンド
-- **worker2**: API、データ処理
-- **worker3**: インフラ、テスト、デプロイ
+- **worker1**: フロントエンド（UI/UX、React等）
+- **worker2**: バックエンド（API、データベース等）
+- **worker3**: インフラ・テスト（デプロイ、テスト等）
 
 ### あなたの役割（各エージェント用）
 - **PRESIDENT**: @instructions/president.md
@@ -532,16 +553,17 @@ ls -la ./instructions ./workspace
 1. **プロジェクト準備**
    ```bash
    mkdir -p ./projects/my-project/{instructions,workspace}
-   ./start.sh --project my-project
+   ./project-manager.sh select my-project
    ```
 
 2. **PRESIDENT起動 & 要件定義**
    - 簡単なタスク → PRESIDENT単独で完了
    - 複雑なタスク → チーム起動を推奨
 
-3. **チーム起動（必要に応じて）**
+3. **システム起動**
    ```bash
-   # チーム画面で各メンバーに役割通知
+   # 統合起動（推奨）
+   ./setup.sh
    ```
 
 ### 継続プロジェクト時
@@ -621,9 +643,9 @@ tail -f logs/progress.log
 
 ---
 
-**作者**: [GitHub](https://github.com/nishimoto265/Claude-Code-Communication)
+**作者**: [GitHub](https://github.com/sanlike0911/Gemini-CLI-Communication)
 **ライセンス**: MIT
-**質問**: [Issues](https://github.com/nishimoto265/Claude-Code-Communication/issues)へどうぞ！
+**質問**: [Issues](https://github.com/sanlike0911/Gemini-CLI-Communication/issues)へどうぞ！
 
 ## 参考リンク
     
