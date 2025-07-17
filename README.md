@@ -121,10 +121,6 @@ PRESIDENT → boss1 → worker1,2,3 → boss1 → PRESIDENT
 │   │   └── worker.md          # worker1-3共通指示書
 │   └── workspace/             # 作業ディレクトリ
 └── (他のプロジェクト...)
-
-# 現在のディレクトリ（シンボリックリンク）
-./instructions -> ./projects/[現在のプロジェクト]/instructions/
-./workspace -> ./projects/[現在のプロジェクト]/workspace/
 ```
 
 ### プロジェクト管理コマンド

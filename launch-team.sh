@@ -108,9 +108,9 @@ launch_team_member() {
     local role="boss1"
     case $pane_id in
         0) role="boss1" ;;
-        1) role="woker1" ;;
-        2) role="woker2" ;;
-        3) role="woker3" ;;
+        1) role="worker1" ;;
+        2) role="worker2" ;;
+        3) role="worker3" ;;
     esac
     
     local model=$(get_agent_model "$role")
@@ -195,12 +195,12 @@ show_pane_layout() {
 ┌─────────────┬─────────────┐
 │             │             │
 │    boss1    │   worker1   │
-│ (ペイン 0)  │ (ペイン 1)   │
+│ (ペイン 0)  │ (ペイン 1)  │
 │             │             │
 ├─────────────┼─────────────┤
 │             │             │
 │   worker3   │   worker2   │
-│ (ペイン 3)  │ (ペイン 2)   │
+│ (ペイン 3)  │ (ペイン 2)  │
 │             │             │
 └─────────────┴─────────────┘
 
