@@ -22,21 +22,21 @@
     {
       "role": "worker1",
       "session": "multiagent:0.1",
-      "name": "実行担当者1",
+      "name": "実行担当者A",
       "model": "gemini-2.5-flash",
       "instructionFileName": "worker.md"
     },
     {
       "role": "worker2",
       "session": "multiagent:0.2",
-      "name": "実行担当者2",
+      "name": "実行担当者B",
       "model": "gemini-2.5-flash",
       "instructionFileName": "worker.md"
     },
     {
       "role": "worker3",
       "session": "multiagent:0.3",
-      "name": "実行担当者3",
+      "name": "実行担当者C",
       "model": "gemini-2.5-flash",
       "instructionFileName": "worker.md"
     }
